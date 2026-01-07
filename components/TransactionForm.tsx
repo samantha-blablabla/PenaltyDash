@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { Plus, X, Loader2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, X, Loader2, ArrowLeft } from 'lucide-react';
 import { Transaction, TransactionType } from '../types';
-import { CATEGORIES } from '../constants';
+import { categoryService } from '../services/storageService';
 
 interface TransactionFormProps {
   onAdd: (transaction: Transaction) => Promise<void> | void;
@@ -11,30 +11,49 @@ interface TransactionFormProps {
 export const TransactionForm: React.FC<TransactionFormProps> = ({ onAdd, onClose }) => {
   const [type, setType] = useState<TransactionType>(TransactionType.INCOME);
   const [amount, setAmount] = useState<string>('');
-  const [category, setCategory] = useState<string>(CATEGORIES[0]);
+  
+  // State for categories
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
+  const [category, setCategory] = useState<string>('');
+  const [isCreatingCategory, setIsCreatingCategory] = useState<boolean>(false);
+
   const [description, setDescription] = useState<string>('');
   const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Load categories on mount
+  useEffect(() => {
+    const cats = categoryService.getAll();
+    setAvailableCategories(cats);
+    if (cats.length > 0) {
+      setCategory(cats[0]);
+    }
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!amount || !description || isSubmitting) return;
+    if (isCreatingCategory && !category.trim()) return;
 
     setIsSubmitting(true);
     try {
+      // If user created a new category, save it
+      if (isCreatingCategory) {
+        categoryService.add(category);
+      }
+
       const newTransaction: Transaction = {
-        id: '', // ID will be assigned by DB
+        id: '', // ID will be assigned by storage service
         type,
         amount: parseFloat(amount),
-        category,
+        category: category.trim(),
         description,
         date,
         status: 'completed'
       };
 
       await onAdd(newTransaction);
-      // onClose is handled by parent, but usually we close here or parent closes. 
-      // Parent closes in this App structure.
+      // onClose handled by parent
     } catch (error) {
       console.error("Error submitting form", error);
     } finally {
@@ -97,16 +116,50 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onAdd, onClose
             </div>
           </div>
 
-          {/* Category */}
+          {/* Category Selection or Creation */}
           <div>
             <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">Danh mục</label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none appearance-none"
-            >
-              {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
+            
+            {isCreatingCategory ? (
+               <div className="flex gap-2">
+                 <input
+                    type="text"
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    className="flex-1 bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    placeholder="Nhập tên danh mục mới..."
+                    autoFocus
+                    required
+                 />
+                 <button 
+                   type="button"
+                   onClick={() => {
+                     setIsCreatingCategory(false);
+                     setCategory(availableCategories[0] || '');
+                   }}
+                   className="px-3 rounded-xl bg-gray-700 hover:bg-gray-600 text-gray-300 transition-colors"
+                   title="Quay lại danh sách"
+                 >
+                   <ArrowLeft size={20} />
+                 </button>
+               </div>
+            ) : (
+              <select
+                value={category}
+                onChange={(e) => {
+                  if (e.target.value === '___NEW___') {
+                    setIsCreatingCategory(true);
+                    setCategory('');
+                  } else {
+                    setCategory(e.target.value);
+                  }
+                }}
+                className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none appearance-none cursor-pointer"
+              >
+                {availableCategories.map(c => <option key={c} value={c}>{c}</option>)}
+                <option value="___NEW___" className="font-semibold text-blue-400 bg-[#1e293b]">+ Thêm danh mục mới...</option>
+              </select>
+            )}
           </div>
 
           {/* Date */}

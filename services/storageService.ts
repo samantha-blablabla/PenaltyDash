@@ -1,7 +1,8 @@
 import { Transaction } from '../types';
-import { MOCK_TRANSACTIONS } from '../constants';
+import { MOCK_TRANSACTIONS, CATEGORIES as DEFAULT_CATEGORIES } from '../constants';
 
 const STORAGE_KEY = 'penalty_dash_data_v1';
+const CATEGORY_STORAGE_KEY = 'penalty_dash_categories_v1';
 const BROADCAST_CHANNEL_NAME = 'penalty_dash_sync';
 
 // Initialize Broadcast Channel for cross-tab sync
@@ -87,5 +88,25 @@ export const transactionService = {
         channel.removeEventListener('message', handler);
       }
     };
+  }
+};
+
+export const categoryService = {
+  getAll: (): string[] => {
+    const stored = localStorage.getItem(CATEGORY_STORAGE_KEY);
+    const userCategories = stored ? JSON.parse(stored) : [];
+    // Return unique categories (Defaults + User defined)
+    return Array.from(new Set([...DEFAULT_CATEGORIES, ...userCategories]));
+  },
+
+  add: (category: string) => {
+    if (!category) return;
+    const stored = localStorage.getItem(CATEGORY_STORAGE_KEY);
+    const userCategories = stored ? JSON.parse(stored) : [];
+    
+    if (!userCategories.includes(category) && !DEFAULT_CATEGORIES.includes(category)) {
+      const updated = [...userCategories, category];
+      localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(updated));
+    }
   }
 };
