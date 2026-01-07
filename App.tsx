@@ -10,14 +10,14 @@ import {
   Calendar,
   Loader2,
   Wallet,
-  X,
-  Plus
+  X
 } from 'lucide-react';
 import { Transaction, TransactionType, DashboardStats } from './types';
 import { StatsCards } from './components/StatsCards';
 import { Charts } from './components/Charts';
 import { TransactionForm } from './components/TransactionForm';
 import { AIConsultant } from './components/AIConsultant';
+// Import from the new storage service
 import { transactionService } from './services/storageService';
 
 const App: React.FC = () => {
@@ -28,18 +28,24 @@ const App: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: '', end: '' });
 
+  // Fetch data on mount and subscribe to changes
   useEffect(() => {
     fetchTransactions();
+
+    // Setup "Realtime" Subscription (via BroadcastChannel)
     const subscription = transactionService.subscribe((payload) => {
+      console.log('Local sync update:', payload);
+      
       if (payload.eventType === 'INSERT' && payload.new) {
         setTransactions((prev) => [payload.new as Transaction, ...prev]);
       } else if (payload.eventType === 'DELETE' && payload.old) {
         setTransactions((prev) => prev.filter((t) => t.id !== payload.old!.id));
-      } else if (payload.eventType === 'RESET') {
-        fetchTransactions();
       }
     });
-    return () => subscription.unsubscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const fetchTransactions = async () => {
@@ -54,13 +60,16 @@ const App: React.FC = () => {
     }
   };
 
+  // Calculate stats
   const stats: DashboardStats = useMemo(() => {
     let income = 0;
     let expense = 0;
+
     transactions.forEach(t => {
       if (t.type === TransactionType.INCOME) income += t.amount;
       else expense += t.amount;
     });
+
     return {
       totalIncome: income,
       totalExpense: expense,
@@ -69,11 +78,14 @@ const App: React.FC = () => {
     };
   }, [transactions]);
 
+  // Filter transactions
   const filteredTransactions = useMemo(() => {
     return transactions
       .filter(t => {
+        // Date Range Filter
         if (dateRange.start && t.date < dateRange.start) return false;
         if (dateRange.end && t.date > dateRange.end) return false;
+
         if (filter === 'INCOME') return t.type === TransactionType.INCOME;
         if (filter === 'EXPENSE') return t.type === TransactionType.EXPENSE;
         return true;
@@ -88,10 +100,16 @@ const App: React.FC = () => {
   const handleAddTransaction = async (newTransaction: Transaction) => {
     try {
       setShowForm(false);
+      
+      // 1. Add to LocalStorage
       const savedTx = await transactionService.add(newTransaction);
+      
+      // 2. Update Local State immediately
       setTransactions(prev => [savedTx, ...prev]);
+
     } catch (error) {
       console.error("Error saving transaction", error);
+      alert("Lỗi khi lưu dữ liệu!");
     }
   };
 
@@ -106,7 +124,7 @@ const App: React.FC = () => {
       <aside className="hidden sm:flex w-64 flex-col justify-between py-6 px-4 bg-[#0b1121] border-r border-gray-800/50">
         <div>
           <div className="flex items-center gap-3 px-2 mb-10">
-             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/20">
+             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary-500 to-accent-500 flex items-center justify-center shadow-lg shadow-primary-500/20">
                 <Wallet size={16} className="text-white" />
              </div>
              <span className="text-xl font-bold text-white tracking-wide">Penalty<span className="text-primary-500">.</span></span>
@@ -125,10 +143,18 @@ const App: React.FC = () => {
               <FolderOpen size={20} />
               <span>Báo cáo</span>
             </a>
+            <a href="#" className="flex items-center gap-4 px-4 py-3 rounded-2xl text-gray-400 hover:text-white hover:bg-white/5 transition-all">
+              <Calendar size={20} />
+              <span>Lịch</span>
+            </a>
           </div>
         </div>
 
         <div>
+           <a href="#" className="flex items-center gap-4 px-4 py-3 rounded-2xl text-gray-400 hover:text-white hover:bg-white/5 transition-all mb-2">
+              <Settings size={20} />
+              <span>Cài đặt</span>
+           </a>
            <a href="#" className="flex items-center gap-4 px-4 py-3 rounded-2xl text-gray-400 hover:text-white hover:bg-white/5 transition-all">
               <LogOut size={20} />
               <span>Đăng xuất</span>
@@ -138,15 +164,30 @@ const App: React.FC = () => {
 
       {/* Main Content */}
       <main className="flex-1 p-4 lg:p-8 overflow-y-auto">
+        
+        {/* Header / Top Bar */}
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
+           {/* Breadcrumbs / Title */}
            <div>
               <div className="flex items-center gap-2 text-gray-500 text-sm mb-1">
                  <span>Home</span> / <span>Dashboard</span> / <span className="text-primary-400">{new Date().toLocaleDateString('vi-VN', {day: '2-digit', month: 'short'})}</span>
               </div>
               <h1 className="text-2xl font-bold text-white">Quản lý thu chi</h1>
+              <div className="flex items-center gap-2 mt-1">
+                 <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                 <p className="text-gray-400 text-sm">Chế độ Local (Sẵn sàng cho Cloudflare)</p>
+              </div>
            </div>
 
+           {/* Actions */}
            <div className="flex items-center gap-4 w-full md:w-auto">
+              <div className="hidden md:flex items-center -space-x-2">
+                 {[1,2,3].map(i => (
+                    <img key={i} src={`https://i.pravatar.cc/100?img=${i+10}`} alt="user" className="w-8 h-8 rounded-full border-2 border-[#0f172a]" />
+                 ))}
+                 <button className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-white border-2 border-[#0f172a] text-xs font-bold">+</button>
+              </div>
+
               <div className="relative">
                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4" />
                  <input 
@@ -158,11 +199,16 @@ const App: React.FC = () => {
                  />
               </div>
 
+              <button className="relative p-2.5 bg-[#1e293b] rounded-full text-gray-400 hover:text-white transition-colors border border-gray-700">
+                 <Bell size={20} />
+                 <span className="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full border border-[#1e293b]"></span>
+              </button>
+
               <button 
                 onClick={() => setShowForm(true)} 
-                className="accent-gradient text-white px-6 py-2.5 rounded-full font-medium shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all transform hover:-translate-y-0.5 border border-white/10 flex items-center gap-2"
+                className="accent-gradient text-white px-6 py-2.5 rounded-full font-medium shadow-lg shadow-primary-500/25 hover:shadow-primary-500/40 transition-all transform hover:-translate-y-0.5 border border-white/10"
               >
-                 <Plus size={18} /> Mới
+                 + Mới
               </button>
            </div>
         </header>
@@ -173,39 +219,68 @@ const App: React.FC = () => {
           </div>
         ) : (
           <>
+            {/* Status Cards */}
             <StatsCards stats={stats} />
+
+            {/* Charts Section */}
             <Charts transactions={transactions} />
 
+            {/* Recent Transactions List (Styled as Glass Card) */}
             <div className="glass-card-gradient rounded-3xl p-6 lg:p-8 shadow-xl border border-white/5">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                  <h3 className="text-lg font-bold text-white">Giao dịch gần đây</h3>
+                  <div>
+                    <h3 className="text-lg font-bold text-white">Giao dịch gần đây</h3>
+                    <p className="text-gray-500 text-sm">Cập nhật lúc {new Date().toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})}</p>
+                  </div>
                   
                   <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                    
+                    {/* Date Range Picker */}
                     <div className="flex items-center gap-2 bg-[#0f172a] p-1.5 rounded-xl border border-gray-800 px-3">
                         <input 
                             type="date" 
-                            className="bg-transparent text-gray-400 text-xs font-medium outline-none cursor-pointer"
+                            className="bg-transparent text-gray-400 text-xs font-medium outline-none [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:opacity-50 hover:[&::-webkit-calendar-picker-indicator]:opacity-100 cursor-pointer"
                             value={dateRange.start}
                             onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
                         />
                         <span className="text-gray-600">-</span>
                         <input 
                             type="date" 
-                            className="bg-transparent text-gray-400 text-xs font-medium outline-none cursor-pointer"
+                            className="bg-transparent text-gray-400 text-xs font-medium outline-none [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:opacity-50 hover:[&::-webkit-calendar-picker-indicator]:opacity-100 cursor-pointer"
                             value={dateRange.end}
                             onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
                         />
                         {(dateRange.start || dateRange.end) && (
-                            <button onClick={() => setDateRange({start: '', end: ''})} className="text-gray-500 hover:text-red-400 ml-1">
+                            <button 
+                                onClick={() => setDateRange({start: '', end: ''})}
+                                className="text-gray-500 hover:text-red-400 ml-1 transition-colors p-0.5"
+                                title="Xóa lọc ngày"
+                            >
                                 <X size={14} />
                             </button>
                         )}
                     </div>
 
+                    {/* Filter Buttons */}
                     <div className="flex bg-[#0f172a] p-1 rounded-xl border border-gray-800">
-                        <button onClick={() => setFilter('ALL')} className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${filter === 'ALL' ? 'bg-primary-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}>Tất cả</button>
-                        <button onClick={() => setFilter('INCOME')} className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${filter === 'INCOME' ? 'bg-primary-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}>Thu</button>
-                        <button onClick={() => setFilter('EXPENSE')} className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${filter === 'EXPENSE' ? 'bg-primary-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}>Chi</button>
+                        <button 
+                            onClick={() => setFilter('ALL')}
+                            className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${filter === 'ALL' ? 'bg-primary-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                        >
+                            Tất cả
+                        </button>
+                        <button 
+                            onClick={() => setFilter('INCOME')}
+                            className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${filter === 'INCOME' ? 'bg-primary-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                        >
+                            Thu
+                        </button>
+                        <button 
+                            onClick={() => setFilter('EXPENSE')}
+                            className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${filter === 'EXPENSE' ? 'bg-primary-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                        >
+                            Chi
+                        </button>
                     </div>
                   </div>
               </div>
@@ -216,6 +291,7 @@ const App: React.FC = () => {
                         <tr className="border-b border-gray-700/50">
                           <th className="pb-4 pl-4">Mô tả</th>
                           <th className="pb-4">Danh mục</th>
+                          <th className="pb-4">Người tham gia</th>
                           <th className="pb-4">Ngày</th>
                           <th className="pb-4 text-right pr-4">Số tiền</th>
                           <th className="pb-4 text-right pr-4">Xóa</th>
@@ -225,9 +301,10 @@ const App: React.FC = () => {
                         {filteredTransactions.map((t, idx) => (
                           <tr key={t.id || idx} className="group border-b border-gray-700/30 last:border-0 hover:bg-white/5 transition-colors">
                               <td className="py-4 pl-4 font-medium text-white flex items-center gap-3">
-                                <div className={`w-2 h-10 rounded-full ${t.type === TransactionType.INCOME ? 'bg-primary-500' : 'bg-red-500'}`}></div>
+                                <div className={`w-2 h-10 rounded-full ${t.type === TransactionType.INCOME ? 'bg-primary-500' : 'bg-pink-500'}`}></div>
                                 <div>
                                     <div className="text-base">{t.description}</div>
+                                    <div className="text-xs text-gray-500 mt-0.5">{t.status === 'completed' ? 'Hoàn thành' : 'Đang xử lý'}</div>
                                 </div>
                               </td>
                               <td className="py-4">
@@ -235,17 +312,28 @@ const App: React.FC = () => {
                                     {t.category}
                                 </span>
                               </td>
+                              <td className="py-4">
+                                <div className="flex -space-x-2">
+                                    <img src={`https://i.pravatar.cc/100?img=${(idx % 20) + 15}`} alt="p" className="w-6 h-6 rounded-full border border-[#0f172a]" />
+                                    <img src={`https://i.pravatar.cc/100?img=${(idx % 20) + 20}`} alt="p" className="w-6 h-6 rounded-full border border-[#0f172a]" />
+                                    <div className="w-6 h-6 rounded-full bg-[#1e293b] border border-[#0f172a] flex items-center justify-center text-[10px] text-gray-400">+2</div>
+                                </div>
+                              </td>
                               <td className="py-4 text-gray-400">
                                 {new Date(t.date).toLocaleDateString('vi-VN')}
+                                <span className="block text-xs text-gray-600">09:00 AM</span>
                               </td>
-                              <td className={`py-4 pr-4 text-right font-bold text-base ${t.type === TransactionType.INCOME ? 'text-primary-400' : 'text-red-400'}`}>
+                              <td className={`py-4 pr-4 text-right font-bold text-base ${t.type === TransactionType.INCOME ? 'text-primary-400' : 'text-pink-400'}`}>
                                 {t.type === TransactionType.INCOME ? '+' : '-'}{formatCurrency(t.amount)}
                               </td>
                               <td className="py-4 pr-4 text-right">
                                 <button 
                                   onClick={(e) => {
                                       e.stopPropagation();
-                                      if(confirm('Bạn có chắc muốn xóa?')) transactionService.delete(t.id);
+                                      if(confirm('Bạn có chắc muốn xóa?')) {
+                                          transactionService.delete(t.id);
+                                          // Update local state handled by listener
+                                      }
                                   }} 
                                   className="text-gray-600 hover:text-red-400 transition-colors p-2 hover:bg-white/5 rounded-full"
                                 >
@@ -256,12 +344,21 @@ const App: React.FC = () => {
                         ))}
                     </tbody>
                   </table>
+                  {filteredTransactions.length === 0 && (
+                    <div className="text-center py-10 text-gray-500">
+                        {dateRange.start || dateRange.end 
+                            ? "Không có giao dịch nào trong khoảng thời gian này"
+                            : "Chưa có giao dịch nào"
+                        }
+                    </div>
+                  )}
               </div>
             </div>
           </>
         )}
       </main>
 
+      {/* Modals */}
       {showForm && (
         <TransactionForm onAdd={handleAddTransaction} onClose={() => setShowForm(false)} />
       )}
