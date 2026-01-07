@@ -12,15 +12,19 @@ import {
   Wallet,
   X
 } from 'lucide-react';
-import { Transaction, TransactionType, DashboardStats } from './types';
+import { Transaction, TransactionType, DashboardStats, UserProfile } from './types';
 import { StatsCards } from './components/StatsCards';
 import { Charts } from './components/Charts';
 import { TransactionForm } from './components/TransactionForm';
 import { AIConsultant } from './components/AIConsultant';
+import { LoginScreen } from './components/LoginScreen';
 // Import from the new storage service
 import { transactionService } from './services/storageService';
 
+const USER_STORAGE_KEY = 'penalty_dash_user_v1';
+
 const App: React.FC = () => {
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -28,25 +32,35 @@ const App: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: '', end: '' });
 
+  // Load user from local storage
+  useEffect(() => {
+    const storedUser = localStorage.getItem(USER_STORAGE_KEY);
+    if (storedUser) {
+      setCurrentUser(JSON.parse(storedUser));
+    }
+  }, []);
+
   // Fetch data on mount and subscribe to changes
   useEffect(() => {
+    if (!currentUser) return; // Only fetch if logged in
+
     fetchTransactions();
 
     // Setup "Realtime" Subscription (via BroadcastChannel)
     const subscription = transactionService.subscribe((payload) => {
-      console.log('Local sync update:', payload);
-      
       if (payload.eventType === 'INSERT' && payload.new) {
         setTransactions((prev) => [payload.new as Transaction, ...prev]);
       } else if (payload.eventType === 'DELETE' && payload.old) {
         setTransactions((prev) => prev.filter((t) => t.id !== payload.old!.id));
+      } else if (payload.eventType === 'RESET') {
+        setTransactions([]);
       }
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [currentUser]);
 
   const fetchTransactions = async () => {
     try {
@@ -58,6 +72,24 @@ const App: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleLogin = (user: UserProfile) => {
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+    setCurrentUser(user);
+  };
+
+  const handleLogout = () => {
+    if(confirm('Bạn muốn đăng xuất khỏi thiết bị này?')) {
+      localStorage.removeItem(USER_STORAGE_KEY);
+      setCurrentUser(null);
+    }
+  };
+
+  // Helper to generate consistent avatars
+  const getAvatarUrl = (seed: string) => {
+    // Use Robohash Set 4 (Cats) for Animal theme as requested
+    return `https://robohash.org/${encodeURIComponent(seed)}.png?set=set4&size=150x150`;
   };
 
   // Calculate stats
@@ -92,7 +124,8 @@ const App: React.FC = () => {
       })
       .filter(t => 
         t.description.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        t.category.toLowerCase().includes(searchTerm.toLowerCase())
+        t.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (t.relatedPerson && t.relatedPerson.toLowerCase().includes(searchTerm.toLowerCase()))
       )
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [transactions, filter, searchTerm, dateRange]);
@@ -116,6 +149,11 @@ const App: React.FC = () => {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
   };
+
+  // If not logged in, show Login Screen
+  if (!currentUser) {
+    return <LoginScreen onLogin={handleLogin} />;
+  }
 
   return (
     <div className="flex min-h-screen font-sans">
@@ -151,14 +189,13 @@ const App: React.FC = () => {
         </div>
 
         <div>
-           <a href="#" className="flex items-center gap-4 px-4 py-3 rounded-2xl text-gray-400 hover:text-white hover:bg-white/5 transition-all mb-2">
-              <Settings size={20} />
-              <span>Cài đặt</span>
-           </a>
-           <a href="#" className="flex items-center gap-4 px-4 py-3 rounded-2xl text-gray-400 hover:text-white hover:bg-white/5 transition-all">
+           <button 
+            onClick={handleLogout}
+            className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-gray-400 hover:text-red-400 hover:bg-white/5 transition-all"
+           >
               <LogOut size={20} />
               <span>Đăng xuất</span>
-           </a>
+           </button>
         </div>
       </aside>
 
@@ -175,19 +212,13 @@ const App: React.FC = () => {
               <h1 className="text-2xl font-bold text-white">Quản lý thu chi</h1>
               <div className="flex items-center gap-2 mt-1">
                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                 <p className="text-gray-400 text-sm">Chế độ Local (Sẵn sàng cho Cloudflare)</p>
+                 <p className="text-gray-400 text-sm">Hi, {currentUser.name}</p>
               </div>
            </div>
 
            {/* Actions */}
            <div className="flex items-center gap-4 w-full md:w-auto">
-              <div className="hidden md:flex items-center -space-x-2">
-                 {[1,2,3].map(i => (
-                    <img key={i} src={`https://i.pravatar.cc/100?img=${i+10}`} alt="user" className="w-8 h-8 rounded-full border-2 border-[#0f172a]" />
-                 ))}
-                 <button className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-white border-2 border-[#0f172a] text-xs font-bold">+</button>
-              </div>
-
+              
               <div className="relative">
                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4" />
                  <input 
@@ -199,10 +230,10 @@ const App: React.FC = () => {
                  />
               </div>
 
-              <button className="relative p-2.5 bg-[#1e293b] rounded-full text-gray-400 hover:text-white transition-colors border border-gray-700">
-                 <Bell size={20} />
-                 <span className="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full border border-[#1e293b]"></span>
-              </button>
+              <div className="flex items-center gap-3 bg-[#1e293b] py-1.5 px-3 rounded-full border border-gray-700">
+                 <img src={getAvatarUrl(currentUser.name)} alt="user" className="w-8 h-8 rounded-full bg-white/10" />
+                 <span className="text-sm font-medium text-white hidden sm:block">{currentUser.name}</span>
+              </div>
 
               <button 
                 onClick={() => setShowForm(true)} 
@@ -291,7 +322,7 @@ const App: React.FC = () => {
                         <tr className="border-b border-gray-700/50">
                           <th className="pb-4 pl-4">Mô tả</th>
                           <th className="pb-4">Danh mục</th>
-                          <th className="pb-4">Người tham gia</th>
+                          <th className="pb-4">Người liên quan</th>
                           <th className="pb-4">Ngày</th>
                           <th className="pb-4 text-right pr-4">Số tiền</th>
                           <th className="pb-4 text-right pr-4">Xóa</th>
@@ -313,10 +344,13 @@ const App: React.FC = () => {
                                 </span>
                               </td>
                               <td className="py-4">
-                                <div className="flex -space-x-2">
-                                    <img src={`https://i.pravatar.cc/100?img=${(idx % 20) + 15}`} alt="p" className="w-6 h-6 rounded-full border border-[#0f172a]" />
-                                    <img src={`https://i.pravatar.cc/100?img=${(idx % 20) + 20}`} alt="p" className="w-6 h-6 rounded-full border border-[#0f172a]" />
-                                    <div className="w-6 h-6 rounded-full bg-[#1e293b] border border-[#0f172a] flex items-center justify-center text-[10px] text-gray-400">+2</div>
+                                <div className="flex items-center gap-2">
+                                    <img 
+                                        src={getAvatarUrl(t.relatedPerson || 'Unknown')} 
+                                        alt="p" 
+                                        className="w-6 h-6 rounded-full border border-[#0f172a] bg-white/10" 
+                                    />
+                                    <span className="text-gray-300 font-medium">{t.relatedPerson || 'N/A'}</span>
                                 </div>
                               </td>
                               <td className="py-4 text-gray-400">
@@ -359,8 +393,12 @@ const App: React.FC = () => {
       </main>
 
       {/* Modals */}
-      {showForm && (
-        <TransactionForm onAdd={handleAddTransaction} onClose={() => setShowForm(false)} />
+      {showForm && currentUser && (
+        <TransactionForm 
+            onAdd={handleAddTransaction} 
+            onClose={() => setShowForm(false)} 
+            currentUser={currentUser}
+        />
       )}
       <AIConsultant transactions={transactions} />
     </div>
