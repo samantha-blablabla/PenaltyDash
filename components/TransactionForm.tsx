@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, X, Loader2, ArrowLeft, User } from 'lucide-react';
 import { Transaction, TransactionType, UserProfile } from '../types';
 import { categoryService } from '../services/storageService';
+import { TEAM_MEMBERS } from '../constants';
 
 interface TransactionFormProps {
   onAdd: (transaction: Transaction) => Promise<void> | void;
@@ -132,20 +133,24 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onAdd, onClose
             </div>
           </div>
 
-          {/* Related Person */}
+          {/* Related Person - Modified to Select Dropdown */}
           <div>
             <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
                {type === TransactionType.INCOME ? 'Người nộp phạt' : 'Người nhận/Chi cho'}
             </label>
             <div className="relative">
-                <input 
-                  type="text"
+                <select
                   value={relatedPerson}
                   onChange={(e) => setRelatedPerson(e.target.value)}
-                  className="w-full bg-[#0f172a] border border-gray-700 rounded-xl pl-10 pr-4 py-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                  placeholder="Nhập tên..."
+                  className="w-full bg-[#0f172a] border border-gray-700 rounded-xl pl-10 pr-4 py-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none appearance-none cursor-pointer"
                   required
-                />
+                >
+                  {TEAM_MEMBERS.map(member => (
+                    <option key={member.name} value={member.name}>{member.name} ({member.role})</option>
+                  ))}
+                  {/* Option for external entities if needed, like 'Company Funds' */}
+                  <option value="Quỹ chung">Quỹ chung / Khác</option>
+                </select>
                 <User size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
             </div>
           </div>

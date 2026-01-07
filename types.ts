@@ -5,6 +5,7 @@ export enum TransactionType {
 
 export interface UserProfile {
   name: string;
+  role?: string; // Added role
   avatar?: string;
 }
 

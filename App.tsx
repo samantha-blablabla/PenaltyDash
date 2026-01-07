@@ -20,6 +20,7 @@ import { AIConsultant } from './components/AIConsultant';
 import { LoginScreen } from './components/LoginScreen';
 // Import from the new storage service
 import { transactionService } from './services/storageService';
+import { TEAM_MEMBERS } from './constants';
 
 const USER_STORAGE_KEY = 'penalty_dash_user_v1';
 
@@ -86,10 +87,15 @@ const App: React.FC = () => {
     }
   };
 
-  // Helper to generate consistent avatars
-  const getAvatarUrl = (seed: string) => {
-    // Use Robohash Set 4 (Cats) for Animal theme as requested
-    return `https://robohash.org/${encodeURIComponent(seed)}.png?set=set4&size=150x150`;
+  // Helper to find avatar from TEAM_MEMBERS based on name
+  // This ensures avatars in the table match the login screen
+  const getAvatarUrl = (name: string) => {
+    const member = TEAM_MEMBERS.find(m => m.name === name);
+    if (member && member.avatar) {
+        return member.avatar;
+    }
+    // Fallback for names not in list (e.g. "Quỹ chung" or old data)
+    return `https://robohash.org/${encodeURIComponent(name)}.png?set=set4&size=150x150`;
   };
 
   // Calculate stats
@@ -188,7 +194,16 @@ const App: React.FC = () => {
           </div>
         </div>
 
-        <div>
+        <div className="space-y-4">
+           {/* Current User Card in Sidebar */}
+           <div className="bg-[#1e293b] rounded-2xl p-3 border border-gray-700/50 flex items-center gap-3">
+              <img src={currentUser.avatar} alt="me" className="w-10 h-10 rounded-full bg-black/20" />
+              <div className="overflow-hidden">
+                  <p className="text-sm font-bold text-white truncate">{currentUser.name}</p>
+                  <p className="text-[10px] text-gray-400 truncate">{currentUser.role}</p>
+              </div>
+           </div>
+
            <button 
             onClick={handleLogout}
             className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-gray-400 hover:text-red-400 hover:bg-white/5 transition-all"
@@ -212,7 +227,7 @@ const App: React.FC = () => {
               <h1 className="text-2xl font-bold text-white">Quản lý thu chi</h1>
               <div className="flex items-center gap-2 mt-1">
                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                 <p className="text-gray-400 text-sm">Hi, {currentUser.name}</p>
+                 <p className="text-gray-400 text-sm">Team Marketing</p>
               </div>
            </div>
 
@@ -230,16 +245,16 @@ const App: React.FC = () => {
                  />
               </div>
 
-              <div className="flex items-center gap-3 bg-[#1e293b] py-1.5 px-3 rounded-full border border-gray-700">
-                 <img src={getAvatarUrl(currentUser.name)} alt="user" className="w-8 h-8 rounded-full bg-white/10" />
-                 <span className="text-sm font-medium text-white hidden sm:block">{currentUser.name}</span>
+              {/* Mobile Profile Indicator (since sidebar is hidden on mobile) */}
+              <div className="sm:hidden flex items-center gap-3 bg-[#1e293b] py-1.5 px-3 rounded-full border border-gray-700">
+                 <img src={currentUser.avatar} alt="user" className="w-8 h-8 rounded-full bg-white/10" />
               </div>
 
               <button 
                 onClick={() => setShowForm(true)} 
-                className="accent-gradient text-white px-6 py-2.5 rounded-full font-medium shadow-lg shadow-primary-500/25 hover:shadow-primary-500/40 transition-all transform hover:-translate-y-0.5 border border-white/10"
+                className="accent-gradient text-white px-6 py-2.5 rounded-full font-medium shadow-lg shadow-primary-500/25 hover:shadow-primary-500/40 transition-all transform hover:-translate-y-0.5 border border-white/10 whitespace-nowrap"
               >
-                 + Mới
+                 + Giao dịch
               </button>
            </div>
         </header>
