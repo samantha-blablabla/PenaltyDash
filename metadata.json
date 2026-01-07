@@ -1,0 +1,5 @@
+{
+  "name": "PenaltyDash - Quản lý Thu Chi Phạt",
+  "description": "Một dashboard quản lý thu chi tiền phạt hiện đại, giao diện tối (Dark Mode) với tông màu Cam Vàng chủ đạo. Tích hợp AI để phân tích xu hướng tài chính.",
+  "requestFramePermissions": []
+}
