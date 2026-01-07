@@ -9,7 +9,8 @@ import {
   FolderOpen,
   Calendar,
   Loader2,
-  Wallet
+  Wallet,
+  X
 } from 'lucide-react';
 import { Transaction, TransactionType, DashboardStats } from './types';
 import { StatsCards } from './components/StatsCards';
@@ -25,6 +26,7 @@ const App: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [filter, setFilter] = useState<'ALL' | 'INCOME' | 'EXPENSE'>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
+  const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: '', end: '' });
 
   // Fetch data on mount and subscribe to changes
   useEffect(() => {
@@ -80,6 +82,10 @@ const App: React.FC = () => {
   const filteredTransactions = useMemo(() => {
     return transactions
       .filter(t => {
+        // Date Range Filter
+        if (dateRange.start && t.date < dateRange.start) return false;
+        if (dateRange.end && t.date > dateRange.end) return false;
+
         if (filter === 'INCOME') return t.type === TransactionType.INCOME;
         if (filter === 'EXPENSE') return t.type === TransactionType.EXPENSE;
         return true;
@@ -89,7 +95,7 @@ const App: React.FC = () => {
         t.category.toLowerCase().includes(searchTerm.toLowerCase())
       )
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [transactions, filter, searchTerm]);
+  }, [transactions, filter, searchTerm, dateRange]);
 
   const handleAddTransaction = async (newTransaction: Transaction) => {
     try {
@@ -221,31 +227,61 @@ const App: React.FC = () => {
 
             {/* Recent Transactions List (Styled as Glass Card) */}
             <div className="glass-card-gradient rounded-3xl p-6 lg:p-8 shadow-xl border border-white/5">
-              <div className="flex justify-between items-center mb-6">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                   <div>
                     <h3 className="text-lg font-bold text-white">Giao dịch gần đây</h3>
                     <p className="text-gray-500 text-sm">Cập nhật lúc {new Date().toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})}</p>
                   </div>
                   
-                  <div className="flex bg-[#0f172a] p-1 rounded-xl border border-gray-800">
-                    <button 
-                        onClick={() => setFilter('ALL')}
-                        className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${filter === 'ALL' ? 'bg-primary-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
-                    >
-                        Tất cả
-                    </button>
-                    <button 
-                        onClick={() => setFilter('INCOME')}
-                        className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${filter === 'INCOME' ? 'bg-primary-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
-                    >
-                        Thu
-                    </button>
-                    <button 
-                        onClick={() => setFilter('EXPENSE')}
-                        className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${filter === 'EXPENSE' ? 'bg-primary-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
-                    >
-                        Chi
-                    </button>
+                  <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                    
+                    {/* Date Range Picker */}
+                    <div className="flex items-center gap-2 bg-[#0f172a] p-1.5 rounded-xl border border-gray-800 px-3">
+                        <input 
+                            type="date" 
+                            className="bg-transparent text-gray-400 text-xs font-medium outline-none [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:opacity-50 hover:[&::-webkit-calendar-picker-indicator]:opacity-100 cursor-pointer"
+                            value={dateRange.start}
+                            onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                        />
+                        <span className="text-gray-600">-</span>
+                        <input 
+                            type="date" 
+                            className="bg-transparent text-gray-400 text-xs font-medium outline-none [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:opacity-50 hover:[&::-webkit-calendar-picker-indicator]:opacity-100 cursor-pointer"
+                            value={dateRange.end}
+                            onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                        />
+                        {(dateRange.start || dateRange.end) && (
+                            <button 
+                                onClick={() => setDateRange({start: '', end: ''})}
+                                className="text-gray-500 hover:text-red-400 ml-1 transition-colors p-0.5"
+                                title="Xóa lọc ngày"
+                            >
+                                <X size={14} />
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Filter Buttons */}
+                    <div className="flex bg-[#0f172a] p-1 rounded-xl border border-gray-800">
+                        <button 
+                            onClick={() => setFilter('ALL')}
+                            className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${filter === 'ALL' ? 'bg-primary-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                        >
+                            Tất cả
+                        </button>
+                        <button 
+                            onClick={() => setFilter('INCOME')}
+                            className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${filter === 'INCOME' ? 'bg-primary-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                        >
+                            Thu
+                        </button>
+                        <button 
+                            onClick={() => setFilter('EXPENSE')}
+                            className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${filter === 'EXPENSE' ? 'bg-primary-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                        >
+                            Chi
+                        </button>
+                    </div>
                   </div>
               </div>
 
@@ -309,7 +345,12 @@ const App: React.FC = () => {
                     </tbody>
                   </table>
                   {filteredTransactions.length === 0 && (
-                    <div className="text-center py-10 text-gray-500">Chưa có giao dịch nào</div>
+                    <div className="text-center py-10 text-gray-500">
+                        {dateRange.start || dateRange.end 
+                            ? "Không có giao dịch nào trong khoảng thời gian này"
+                            : "Chưa có giao dịch nào"
+                        }
+                    </div>
                   )}
               </div>
             </div>
