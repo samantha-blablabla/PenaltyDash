@@ -3,14 +3,13 @@ import {
   LayoutDashboard, 
   List, 
   Search, 
-  Bell, 
-  Settings, 
   LogOut,
   FolderOpen,
   Calendar,
   Loader2,
   Wallet,
-  X
+  X,
+  Edit2
 } from 'lucide-react';
 import { Transaction, TransactionType, DashboardStats, UserProfile } from './types';
 import { StatsCards } from './components/StatsCards';
@@ -18,20 +17,24 @@ import { Charts } from './components/Charts';
 import { TransactionForm } from './components/TransactionForm';
 import { AIConsultant } from './components/AIConsultant';
 import { LoginScreen } from './components/LoginScreen';
-// Import from the new storage service
+import { TeamPresence } from './components/TeamPresence';
+import { AvatarEditor } from './components/AvatarEditor';
 import { transactionService } from './services/storageService';
+import { presenceService } from './services/presenceService';
 import { TEAM_MEMBERS } from './constants';
 
-const USER_STORAGE_KEY = 'penalty_dash_user_v1';
+const USER_STORAGE_KEY = 'penalty_dash_user_v2'; // Bumped version for new avatar support
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [showAvatarEditor, setShowAvatarEditor] = useState(false);
   const [filter, setFilter] = useState<'ALL' | 'INCOME' | 'EXPENSE'>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: '', end: '' });
+  const [onlineUsers, setOnlineUsers] = useState<UserProfile[]>([]);
 
   // Load user from local storage
   useEffect(() => {
@@ -47,8 +50,8 @@ const App: React.FC = () => {
 
     fetchTransactions();
 
-    // Setup "Realtime" Subscription (via BroadcastChannel)
-    const subscription = transactionService.subscribe((payload) => {
+    // Setup Transaction Subscription
+    const txSubscription = transactionService.subscribe((payload) => {
       if (payload.eventType === 'INSERT' && payload.new) {
         setTransactions((prev) => [payload.new as Transaction, ...prev]);
       } else if (payload.eventType === 'DELETE' && payload.old) {
@@ -58,10 +61,18 @@ const App: React.FC = () => {
       }
     });
 
+    // Setup Presence Subscription
+    // Note: We subscribe with currentUser. If currentUser changes (e.g. avatar update), 
+    // we need to update the presence service.
+    const presenceSub = presenceService.subscribe(currentUser, (users) => {
+      setOnlineUsers(users);
+    });
+
     return () => {
-      subscription.unsubscribe();
+      txSubscription.unsubscribe();
+      presenceSub.unsubscribe();
     };
-  }, [currentUser]);
+  }, [currentUser]); // Re-run if currentUser changes (this handles presence update implicitly via re-subscription or we can optimize)
 
   const fetchTransactions = async () => {
     try {
@@ -87,14 +98,36 @@ const App: React.FC = () => {
     }
   };
 
-  // Helper to find avatar from TEAM_MEMBERS based on name
-  // This ensures avatars in the table match the login screen
+  const handleUpdateAvatar = (newUrl: string) => {
+    if (!currentUser) return;
+    
+    const updatedUser = { ...currentUser, avatar: newUrl };
+    setCurrentUser(updatedUser);
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
+    
+    // Determine which presence instance to update. 
+    // Since re-rendering App component will trigger useEffect cleanup and re-subscribe,
+    // the new avatar will be broadcast automatically by the new subscription.
+    // However, for immediate local feedback without flicker, we can manually update via service if we exposed it,
+    // but React effect cleanup/setup is fast enough here.
+  };
+
+  // Helper to find avatar from TEAM_MEMBERS or Online Users or Fallback
   const getAvatarUrl = (name: string) => {
+    // 1. Check if it's the current user (show their custom avatar immediately)
+    if (currentUser && currentUser.name === name) return currentUser.avatar;
+
+    // 2. Check online users (they might have custom avatars broadcasted)
+    const onlineUser = onlineUsers.find(u => u.name === name);
+    if (onlineUser && onlineUser.avatar) return onlineUser.avatar;
+
+    // 3. Fallback to static list
     const member = TEAM_MEMBERS.find(m => m.name === name);
     if (member && member.avatar) {
         return member.avatar;
     }
-    // Fallback for names not in list (e.g. "Quỹ chung" or old data)
+    
+    // 4. Generate fallback
     return `https://robohash.org/${encodeURIComponent(name)}.png?set=set4&size=150x150`;
   };
 
@@ -195,9 +228,14 @@ const App: React.FC = () => {
         </div>
 
         <div className="space-y-4">
-           {/* Current User Card in Sidebar */}
-           <div className="bg-[#1e293b] rounded-2xl p-3 border border-gray-700/50 flex items-center gap-3">
-              <img src={currentUser.avatar} alt="me" className="w-10 h-10 rounded-full bg-black/20" />
+           {/* Current User Card in Sidebar with Edit Avatar button */}
+           <div className="bg-[#1e293b] rounded-2xl p-3 border border-gray-700/50 flex items-center gap-3 relative group">
+              <div className="relative cursor-pointer" onClick={() => setShowAvatarEditor(true)}>
+                <img src={currentUser.avatar} alt="me" className="w-10 h-10 rounded-full bg-black/20" />
+                <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Edit2 size={12} className="text-white" />
+                </div>
+              </div>
               <div className="overflow-hidden">
                   <p className="text-sm font-bold text-white truncate">{currentUser.name}</p>
                   <p className="text-[10px] text-gray-400 truncate">{currentUser.role}</p>
@@ -234,7 +272,7 @@ const App: React.FC = () => {
            {/* Actions */}
            <div className="flex items-center gap-4 w-full md:w-auto">
               
-              <div className="relative">
+              <div className="relative flex-1 md:flex-none">
                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4" />
                  <input 
                     type="text" 
@@ -245,10 +283,15 @@ const App: React.FC = () => {
                  />
               </div>
 
-              {/* Mobile Profile Indicator (since sidebar is hidden on mobile) */}
-              <div className="sm:hidden flex items-center gap-3 bg-[#1e293b] py-1.5 px-3 rounded-full border border-gray-700">
-                 <img src={currentUser.avatar} alt="user" className="w-8 h-8 rounded-full bg-white/10" />
+              {/* Team Presence Component */}
+              <div className="hidden sm:block">
+                <TeamPresence onlineUsers={onlineUsers} />
               </div>
+
+              {/* Mobile Profile Indicator (since sidebar is hidden on mobile) */}
+              <button onClick={() => setShowAvatarEditor(true)} className="sm:hidden flex items-center gap-3 bg-[#1e293b] py-1.5 px-3 rounded-full border border-gray-700">
+                 <img src={currentUser.avatar} alt="user" className="w-8 h-8 rounded-full bg-white/10" />
+              </button>
 
               <button 
                 onClick={() => setShowForm(true)} 
@@ -415,6 +458,15 @@ const App: React.FC = () => {
             currentUser={currentUser}
         />
       )}
+      
+      {showAvatarEditor && currentUser && (
+        <AvatarEditor 
+           user={currentUser}
+           onClose={() => setShowAvatarEditor(false)}
+           onSave={handleUpdateAvatar}
+        />
+      )}
+      
       <AIConsultant transactions={transactions} />
     </div>
   );
