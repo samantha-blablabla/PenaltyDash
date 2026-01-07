@@ -1,13 +1,15 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   LayoutDashboard, 
   List, 
   Plus, 
   Search, 
-  Filter, 
   Bell, 
   Settings, 
-  ChevronDown
+  LogOut,
+  FolderOpen,
+  Calendar,
+  MoreHorizontal
 } from 'lucide-react';
 import { Transaction, TransactionType, DashboardStats } from './types';
 import { MOCK_TRANSACTIONS } from './constants';
@@ -64,174 +66,189 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 font-sans selection:bg-primary-500 selection:text-gray-900">
+    <div className="flex min-h-screen font-sans">
       
-      {/* Sidebar Navigation (Desktop) */}
-      <aside className="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0 border-r border-gray-800 bg-gray-900">
-        <div className="h-full px-3 py-4 overflow-y-auto">
-          <div className="flex items-center ps-2.5 mb-8">
-            <div className="w-8 h-8 bg-gradient-to-br from-primary-400 to-orange-500 rounded-lg flex items-center justify-center mr-3 shadow-lg shadow-orange-500/20">
-              <span className="text-gray-900 font-bold text-lg">P</span>
-            </div>
-            <span className="self-center text-xl font-bold whitespace-nowrap text-white tracking-tight">Penalty<span className="text-primary-500">Dash</span></span>
+      {/* Sidebar - Matching Reference (Dark, minimal, curved selected state) */}
+      <aside className="hidden sm:flex w-64 flex-col justify-between py-6 px-4 bg-[#0b1121] border-r border-gray-800/50">
+        <div>
+          <div className="flex items-center gap-3 px-2 mb-10">
+             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center">
+                <span className="text-white font-bold text-sm">P</span>
+             </div>
+             <span className="text-xl font-bold text-white tracking-wide">Penalty<span className="text-blue-500">.</span></span>
           </div>
-          <ul className="space-y-2 font-medium">
-            <li>
-              <a href="#" className="flex items-center p-3 text-gray-900 rounded-lg bg-primary-500 shadow-lg shadow-primary-900/20 group">
-                <LayoutDashboard className="flex-shrink-0 w-5 h-5 transition duration-75 text-gray-900" />
-                <span className="ms-3 font-semibold">Tổng quan</span>
-              </a>
-            </li>
-            <li>
-              <a href="#" className="flex items-center p-3 text-gray-300 rounded-lg hover:bg-gray-800 hover:text-white group transition-all">
-                <List className="flex-shrink-0 w-5 h-5 transition duration-75 text-gray-400 group-hover:text-white" />
-                <span className="ms-3">Lịch sử giao dịch</span>
-              </a>
-            </li>
-             <li>
-              <a href="#" className="flex items-center p-3 text-gray-300 rounded-lg hover:bg-gray-800 hover:text-white group transition-all">
-                <Settings className="flex-shrink-0 w-5 h-5 transition duration-75 text-gray-400 group-hover:text-white" />
-                <span className="ms-3">Cài đặt</span>
-              </a>
-            </li>
-          </ul>
-          
-          <div className="absolute bottom-5 left-0 w-full px-4">
-            <div className="p-4 bg-gray-800/50 rounded-xl border border-gray-700">
-               <div className="flex items-center space-x-3 mb-3">
-                 <div className="w-8 h-8 rounded-full bg-primary-500/20 flex items-center justify-center text-primary-400 font-bold text-xs">AD</div>
-                 <div>
-                    <p className="text-sm font-semibold text-white">Admin User</p>
-                    <p className="text-xs text-gray-400">Quản trị viên</p>
-                 </div>
-               </div>
-            </div>
+
+          <div className="space-y-2">
+            <a href="#" className="flex items-center gap-4 px-4 py-3 rounded-2xl bg-blue-600/10 text-blue-400 font-medium transition-all shadow-[0_0_15px_rgba(37,99,235,0.2)]">
+              <LayoutDashboard size={20} />
+              <span>Dashboard</span>
+            </a>
+            <a href="#" className="flex items-center gap-4 px-4 py-3 rounded-2xl text-gray-400 hover:text-white hover:bg-white/5 transition-all">
+              <List size={20} />
+              <span>Giao dịch</span>
+            </a>
+            <a href="#" className="flex items-center gap-4 px-4 py-3 rounded-2xl text-gray-400 hover:text-white hover:bg-white/5 transition-all">
+              <FolderOpen size={20} />
+              <span>Báo cáo</span>
+            </a>
+            <a href="#" className="flex items-center gap-4 px-4 py-3 rounded-2xl text-gray-400 hover:text-white hover:bg-white/5 transition-all">
+              <Calendar size={20} />
+              <span>Lịch</span>
+            </a>
           </div>
+        </div>
+
+        <div>
+           <a href="#" className="flex items-center gap-4 px-4 py-3 rounded-2xl text-gray-400 hover:text-white hover:bg-white/5 transition-all mb-2">
+              <Settings size={20} />
+              <span>Cài đặt</span>
+           </a>
+           <a href="#" className="flex items-center gap-4 px-4 py-3 rounded-2xl text-gray-400 hover:text-white hover:bg-white/5 transition-all">
+              <LogOut size={20} />
+              <span>Đăng xuất</span>
+           </a>
         </div>
       </aside>
 
       {/* Main Content */}
-      <div className="p-4 sm:ml-64">
-        {/* Top Bar */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 pt-4">
-          <div>
-            <h1 className="text-2xl font-bold text-white">Dashboard Quản Lý Quỹ</h1>
-            <p className="text-gray-400 text-sm mt-1">Hôm nay, {new Date().toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-          </div>
-          
-          <div className="flex items-center gap-4 w-full md:w-auto">
-             <div className="relative flex-grow md:flex-grow-0">
-               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-               <input 
-                  type="text" 
-                  placeholder="Tìm kiếm..." 
-                  className="bg-gray-800 border border-gray-700 text-gray-200 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2.5 outline-none placeholder-gray-500"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-               />
-             </div>
-             <button className="p-2.5 text-gray-400 hover:text-white bg-gray-800 rounded-lg border border-gray-700 hover:bg-gray-700 transition-colors relative">
-               <Bell size={20} />
-               <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
-             </button>
-             <button 
-              onClick={() => setShowForm(true)}
-              className="flex items-center gap-2 bg-primary-500 hover:bg-primary-400 text-gray-900 font-bold rounded-lg text-sm px-5 py-2.5 shadow-lg shadow-primary-500/20 transition-all active:scale-95 whitespace-nowrap"
-            >
-               <Plus size={18} /> <span className="hidden sm:inline">Thêm mới</span>
-             </button>
-          </div>
-        </div>
+      <main className="flex-1 p-4 lg:p-8 overflow-y-auto">
+        
+        {/* Header / Top Bar */}
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
+           {/* Breadcrumbs / Title */}
+           <div>
+              <div className="flex items-center gap-2 text-gray-500 text-sm mb-1">
+                 <span>Home</span> / <span>Dashboard</span> / <span className="text-blue-400">{new Date().toLocaleDateString('vi-VN', {day: '2-digit', month: 'short'})}</span>
+              </div>
+              <h1 className="text-2xl font-bold text-white">Quản lý thu chi</h1>
+              <p className="text-gray-400 text-sm">Quản lý kế hoạch và ngân sách đơn giản hơn.</p>
+           </div>
 
-        {/* Stats Cards */}
+           {/* Actions */}
+           <div className="flex items-center gap-4 w-full md:w-auto">
+              <div className="hidden md:flex items-center -space-x-2">
+                 {[1,2,3].map(i => (
+                    <img key={i} src={`https://i.pravatar.cc/100?img=${i+10}`} alt="user" className="w-8 h-8 rounded-full border-2 border-[#0f172a]" />
+                 ))}
+                 <button className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white border-2 border-[#0f172a] text-xs">+</button>
+              </div>
+
+              <div className="relative">
+                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4" />
+                 <input 
+                    type="text" 
+                    placeholder="Tìm kiếm"
+                    className="bg-[#1e293b] text-white text-sm rounded-full pl-10 pr-4 py-2.5 outline-none border border-gray-700 focus:border-blue-500 w-full md:w-48 transition-all"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                 />
+              </div>
+
+              <button className="relative p-2.5 bg-[#1e293b] rounded-full text-gray-400 hover:text-white transition-colors border border-gray-700">
+                 <Bell size={20} />
+                 <span className="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full border border-[#1e293b]"></span>
+              </button>
+
+              <button 
+                onClick={() => setShowForm(true)} 
+                className="accent-gradient text-white px-6 py-2.5 rounded-full font-medium shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all transform hover:-translate-y-0.5"
+              >
+                 + Mới
+              </button>
+           </div>
+        </header>
+
+        {/* Status Cards */}
         <StatsCards stats={stats} />
 
-        {/* Charts */}
+        {/* Charts Section */}
         <Charts transactions={transactions} />
 
-        {/* Transaction Table */}
-        <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-lg overflow-hidden">
-          <div className="p-6 border-b border-gray-700 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <h3 className="text-lg font-semibold text-white">Giao dịch gần đây</h3>
-            
-            <div className="flex items-center bg-gray-900 rounded-lg p-1 border border-gray-700">
-               <button 
-                  onClick={() => setFilter('ALL')}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${filter === 'ALL' ? 'bg-gray-700 text-white shadow' : 'text-gray-400 hover:text-white'}`}
-               >
-                 Tất cả
-               </button>
-               <button 
-                  onClick={() => setFilter('INCOME')}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${filter === 'INCOME' ? 'bg-gray-700 text-green-400 shadow' : 'text-gray-400 hover:text-white'}`}
-               >
-                 Thu phạt
-               </button>
-               <button 
-                  onClick={() => setFilter('EXPENSE')}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${filter === 'EXPENSE' ? 'bg-gray-700 text-red-400 shadow' : 'text-gray-400 hover:text-white'}`}
-               >
-                 Chi tiêu
-               </button>
-            </div>
-          </div>
-          
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left text-gray-300">
-              <thead className="text-xs text-gray-500 uppercase bg-gray-900/50 border-b border-gray-700">
-                <tr>
-                  <th scope="col" className="px-6 py-4 font-medium">Mô tả</th>
-                  <th scope="col" className="px-6 py-4 font-medium">Danh mục</th>
-                  <th scope="col" className="px-6 py-4 font-medium">Ngày</th>
-                  <th scope="col" className="px-6 py-4 font-medium">Trạng thái</th>
-                  <th scope="col" className="px-6 py-4 text-right font-medium">Số tiền</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredTransactions.length > 0 ? (
-                  filteredTransactions.map((t) => (
-                    <tr key={t.id} className="border-b border-gray-800 hover:bg-gray-700/30 transition-colors">
-                      <td className="px-6 py-4 font-medium text-white">
-                        {t.description}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="bg-gray-700 text-gray-300 text-xs px-2.5 py-0.5 rounded border border-gray-600">
-                          {t.category}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-gray-400">
-                        {new Date(t.date).toLocaleDateString('vi-VN')}
-                      </td>
-                      <td className="px-6 py-4">
-                         <div className="flex items-center">
-                            <div className={`h-2.5 w-2.5 rounded-full mr-2 ${t.status === 'completed' ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
-                            <span className="text-gray-300">{t.status === 'completed' ? 'Hoàn thành' : 'Chờ xử lý'}</span>
-                         </div>
-                      </td>
-                      <td className={`px-6 py-4 text-right font-bold ${t.type === TransactionType.INCOME ? 'text-green-400' : 'text-red-400'}`}>
-                        {t.type === TransactionType.INCOME ? '+' : '-'}{formatCurrency(t.amount)}
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
-                      Không tìm thấy giao dịch nào.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+        {/* Recent Transactions List (Styled as Glass Card) */}
+        <div className="glass-card-gradient rounded-3xl p-6 lg:p-8 shadow-xl">
+           <div className="flex justify-between items-center mb-6">
+              <div>
+                 <h3 className="text-lg font-bold text-white">Giao dịch gần đây</h3>
+                 <p className="text-gray-500 text-sm">Cập nhật lúc {new Date().toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})}</p>
+              </div>
+              
+              <div className="flex bg-[#0f172a] p-1 rounded-xl">
+                 <button 
+                    onClick={() => setFilter('ALL')}
+                    className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${filter === 'ALL' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                 >
+                    Tất cả
+                 </button>
+                 <button 
+                    onClick={() => setFilter('INCOME')}
+                    className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${filter === 'INCOME' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                 >
+                    Thu
+                 </button>
+                 <button 
+                    onClick={() => setFilter('EXPENSE')}
+                    className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${filter === 'EXPENSE' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                 >
+                    Chi
+                 </button>
+              </div>
+           </div>
 
-      {/* Transaction Modal */}
+           <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                 <thead className="text-gray-500 text-xs uppercase font-semibold">
+                    <tr className="border-b border-gray-700/50">
+                       <th className="pb-4 pl-4">Mô tả</th>
+                       <th className="pb-4">Danh mục</th>
+                       <th className="pb-4">Người tham gia</th>
+                       <th className="pb-4">Ngày</th>
+                       <th className="pb-4 text-right pr-4">Số tiền</th>
+                    </tr>
+                 </thead>
+                 <tbody className="text-sm">
+                    {filteredTransactions.map((t, idx) => (
+                       <tr key={t.id} className="group border-b border-gray-700/30 last:border-0 hover:bg-white/5 transition-colors">
+                          <td className="py-4 pl-4 font-medium text-white flex items-center gap-3">
+                             <div className={`w-2 h-10 rounded-full ${t.type === TransactionType.INCOME ? 'bg-blue-500' : 'bg-pink-500'}`}></div>
+                             <div>
+                                <div className="text-base">{t.description}</div>
+                                <div className="text-xs text-gray-500 mt-0.5">{t.status === 'completed' ? 'Hoàn thành' : 'Đang xử lý'}</div>
+                             </div>
+                          </td>
+                          <td className="py-4">
+                             <span className="px-3 py-1 rounded-full text-xs font-medium bg-[#1e293b] text-gray-300 border border-gray-700">
+                                {t.category}
+                             </span>
+                          </td>
+                          <td className="py-4">
+                             <div className="flex -space-x-2">
+                                <img src={`https://i.pravatar.cc/100?img=${idx + 15}`} alt="p" className="w-6 h-6 rounded-full border border-[#0f172a]" />
+                                <img src={`https://i.pravatar.cc/100?img=${idx + 20}`} alt="p" className="w-6 h-6 rounded-full border border-[#0f172a]" />
+                                <div className="w-6 h-6 rounded-full bg-[#1e293b] border border-[#0f172a] flex items-center justify-center text-[10px] text-gray-400">+2</div>
+                             </div>
+                          </td>
+                          <td className="py-4 text-gray-400">
+                             {new Date(t.date).toLocaleDateString('vi-VN')}
+                             <span className="block text-xs text-gray-600">09:00 AM</span>
+                          </td>
+                          <td className={`py-4 pr-4 text-right font-bold text-base ${t.type === TransactionType.INCOME ? 'text-blue-400' : 'text-pink-400'}`}>
+                             {t.type === TransactionType.INCOME ? '+' : '-'}{formatCurrency(t.amount)}
+                          </td>
+                       </tr>
+                    ))}
+                 </tbody>
+              </table>
+              {filteredTransactions.length === 0 && (
+                 <div className="text-center py-10 text-gray-500">Chưa có giao dịch nào</div>
+              )}
+           </div>
+        </div>
+      </main>
+
+      {/* Modals */}
       {showForm && (
         <TransactionForm onAdd={handleAddTransaction} onClose={() => setShowForm(false)} />
       )}
-
-      {/* AI Assistant */}
       <AIConsultant transactions={transactions} />
     </div>
   );

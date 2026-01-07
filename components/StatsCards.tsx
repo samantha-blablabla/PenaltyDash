@@ -1,5 +1,5 @@
 import React from 'react';
-import { TrendingUp, TrendingDown, DollarSign, Wallet } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight, CreditCard } from 'lucide-react';
 import { DashboardStats } from '../types';
 
 interface StatsCardsProps {
@@ -12,62 +12,99 @@ const formatCurrency = (amount: number) => {
 
 export const StatsCards: React.FC<StatsCardsProps> = ({ stats }) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      {/* Net Balance */}
-      <div className="bg-gray-800 border border-gray-700 rounded-xl p-6 shadow-lg relative overflow-hidden group hover:border-primary-500/50 transition-colors">
-        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-          <Wallet size={48} className="text-primary-500" />
-        </div>
-        <p className="text-gray-400 text-sm font-medium mb-1">Số dư hiện tại</p>
-        <h3 className={`text-2xl font-bold ${stats.netBalance >= 0 ? 'text-primary-400' : 'text-red-400'}`}>
-          {formatCurrency(stats.netBalance)}
-        </h3>
-        <div className="mt-4 flex items-center text-xs text-gray-400">
-          <span className="text-green-400 flex items-center mr-1">
-            <TrendingUp size={14} className="mr-1" /> +12%
-          </span>
-          so với tháng trước
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      
+      {/* Main Balance Card - Styled like "Today note" in reference */}
+      <div className="lg:col-span-2 relative overflow-hidden rounded-3xl p-8 text-white shadow-2xl">
+        <div className="absolute inset-0 accent-gradient opacity-90"></div>
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-soft-light"></div>
+        
+        {/* Decorative Circles */}
+        <div className="absolute top-[-20%] right-[-10%] w-64 h-64 bg-purple-500 rounded-full blur-[80px] opacity-40"></div>
+        <div className="absolute bottom-[-20%] left-[-10%] w-64 h-64 bg-blue-400 rounded-full blur-[60px] opacity-40"></div>
+
+        <div className="relative z-10 flex flex-col justify-between h-full">
+          <div className="flex justify-between items-start mb-8">
+            <div>
+              <p className="text-blue-100 font-medium mb-1 flex items-center gap-2">
+                <Wallet size={18} /> Số dư quỹ hiện tại
+              </p>
+              <h2 className="text-4xl font-bold tracking-tight text-white mt-2">
+                {formatCurrency(stats.netBalance)}
+              </h2>
+            </div>
+            <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/10">
+              <CreditCard className="text-white" size={20} />
+            </div>
+          </div>
+
+          <div className="flex gap-4">
+             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 flex-1 border border-white/10">
+                <p className="text-blue-100 text-xs mb-1">Thu (Phạt)</p>
+                <div className="flex items-center gap-2">
+                   <span className="text-lg font-bold text-white">{formatCurrency(stats.totalIncome)}</span>
+                   <span className="bg-emerald-500/20 text-emerald-300 text-[10px] px-1.5 py-0.5 rounded-full flex items-center">
+                     <ArrowUpRight size={10} className="mr-0.5"/> 12%
+                   </span>
+                </div>
+             </div>
+             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 flex-1 border border-white/10">
+                <p className="text-blue-100 text-xs mb-1">Chi tiêu</p>
+                <div className="flex items-center gap-2">
+                   <span className="text-lg font-bold text-white">{formatCurrency(stats.totalExpense)}</span>
+                   <span className="bg-rose-500/20 text-rose-300 text-[10px] px-1.5 py-0.5 rounded-full flex items-center">
+                     <ArrowDownRight size={10} className="mr-0.5"/> 5%
+                   </span>
+                </div>
+             </div>
+          </div>
         </div>
       </div>
 
-      {/* Total Income */}
-      <div className="bg-gray-800 border border-gray-700 rounded-xl p-6 shadow-lg relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-4 opacity-10">
-          <TrendingUp size={48} className="text-green-500" />
+      {/* Right Column - Stats List like "My files" */}
+      <div className="glass-card-gradient rounded-3xl p-6 shadow-xl relative overflow-hidden">
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-lg font-semibold text-white">Hoạt động</h3>
+          <button className="text-gray-400 hover:text-white transition-colors">•••</button>
         </div>
-        <p className="text-gray-400 text-sm font-medium mb-1">Tổng thu (Phạt)</p>
-        <h3 className="text-2xl font-bold text-green-400">
-          {formatCurrency(stats.totalIncome)}
-        </h3>
-        <div className="w-full bg-gray-700 h-1.5 mt-4 rounded-full">
-          <div className="bg-green-500 h-1.5 rounded-full" style={{ width: '70%' }}></div>
-        </div>
-      </div>
 
-      {/* Total Expense */}
-      <div className="bg-gray-800 border border-gray-700 rounded-xl p-6 shadow-lg relative overflow-hidden">
-         <div className="absolute top-0 right-0 p-4 opacity-10">
-          <TrendingDown size={48} className="text-red-500" />
-        </div>
-        <p className="text-gray-400 text-sm font-medium mb-1">Tổng chi (Hoạt động)</p>
-        <h3 className="text-2xl font-bold text-red-400">
-          {formatCurrency(stats.totalExpense)}
-        </h3>
-         <div className="w-full bg-gray-700 h-1.5 mt-4 rounded-full">
-          <div className="bg-red-500 h-1.5 rounded-full" style={{ width: '45%' }}></div>
-        </div>
-      </div>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between group cursor-pointer">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
+                <TrendingUp size={20} className="text-blue-400" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-200">Tổng thu</p>
+                <p className="text-xs text-gray-500">Tháng này</p>
+              </div>
+            </div>
+            <span className="text-sm font-semibold text-blue-400">{formatCurrency(stats.totalIncome)}</span>
+          </div>
 
-      {/* Transaction Count */}
-      <div className="bg-gray-800 border border-gray-700 rounded-xl p-6 shadow-lg relative overflow-hidden">
-         <div className="absolute top-0 right-0 p-4 opacity-10">
-          <DollarSign size={48} className="text-blue-500" />
+          <div className="flex items-center justify-between group cursor-pointer">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center group-hover:bg-purple-500/20 transition-colors">
+                <TrendingDown size={20} className="text-purple-400" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-200">Tổng chi</p>
+                <p className="text-xs text-gray-500">Tháng này</p>
+              </div>
+            </div>
+            <span className="text-sm font-semibold text-purple-400">{formatCurrency(stats.totalExpense)}</span>
+          </div>
+
+          <div className="mt-6 pt-4 border-t border-gray-700/50">
+             <div className="flex justify-between items-center mb-2">
+                <span className="text-xs text-gray-400">Ngân sách sử dụng</span>
+                <span className="text-xs text-white font-bold">70%</span>
+             </div>
+             <div className="w-full bg-gray-700/50 h-2 rounded-full overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-blue-500 to-purple-500 w-[70%] rounded-full shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
+             </div>
+          </div>
         </div>
-        <p className="text-gray-400 text-sm font-medium mb-1">Tổng giao dịch</p>
-        <h3 className="text-2xl font-bold text-white">
-          {stats.transactionCount}
-        </h3>
-        <p className="text-xs text-gray-400 mt-4">Ghi nhận trong hệ thống</p>
       </div>
     </div>
   );
