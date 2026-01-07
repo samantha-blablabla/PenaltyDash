@@ -1,13 +1,10 @@
 import { GoogleGenAI } from "@google/genai";
 import { Transaction } from '../types';
 
-const apiKey = process.env.API_KEY || '';
-const ai = new GoogleGenAI({ apiKey });
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const analyzeFinancialData = async (transactions: Transaction[]): Promise<string> => {
-  if (!apiKey) {
-    return "Vui lòng cấu hình API_KEY để sử dụng tính năng phân tích AI.";
-  }
+  // API Key is assumed to be pre-configured and valid per guidelines.
 
   const transactionDataStr = JSON.stringify(transactions.map(t => ({
     date: t.date,
