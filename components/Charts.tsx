@@ -1,7 +1,5 @@
 import React from 'react';
 import {
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -20,19 +18,16 @@ interface ChartsProps {
   transactions: Transaction[];
 }
 
-const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4', '#10b981'];
+const COLORS = ['#3b82f6', '#06b6d4', '#ef4444', '#8b5cf6', '#10b981']; // Blue, Cyan, Red, Violet, Emerald
 
 export const Charts: React.FC<ChartsProps> = ({ transactions }) => {
-  // Process data for Area Chart (Smoother look like reference)
   const monthlyData = React.useMemo(() => {
     const data: Record<string, { name: string; Thu: number; Chi: number }> = {};
-    
-    // Sort transactions by date first to ensure chart flows correctly
     const sorted = [...transactions].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     sorted.forEach((t) => {
       const date = new Date(t.date);
-      const key = `${date.getDate()}/${date.getMonth() + 1}`; // Show daily for more granularity
+      const key = `${date.getDate()}/${date.getMonth() + 1}`; 
       
       if (!data[key]) {
         data[key] = { name: key, Thu: 0, Chi: 0 };
@@ -65,7 +60,7 @@ export const Charts: React.FC<ChartsProps> = ({ transactions }) => {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-      {/* Area Chart - Replaces Bar Chart for a smoother look */}
+      {/* Area Chart */}
       <div className="lg:col-span-2 glass-card-gradient rounded-3xl p-6 shadow-xl">
         <h3 className="text-lg font-semibold text-white mb-6">Phân tích dòng tiền</h3>
         <div className="h-72 w-full">
@@ -80,8 +75,8 @@ export const Charts: React.FC<ChartsProps> = ({ transactions }) => {
                   <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
                 </linearGradient>
                 <linearGradient id="colorChi" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#ec4899" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#ec4899" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
@@ -93,7 +88,7 @@ export const Charts: React.FC<ChartsProps> = ({ transactions }) => {
               />
               <Legend iconType="circle" />
               <Area type="monotone" dataKey="Thu" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorThu)" name="Thu vào" />
-              <Area type="monotone" dataKey="Chi" stroke="#ec4899" strokeWidth={3} fillOpacity={1} fill="url(#colorChi)" name="Chi ra" />
+              <Area type="monotone" dataKey="Chi" stroke="#ef4444" strokeWidth={3} fillOpacity={1} fill="url(#colorChi)" name="Chi ra" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -135,7 +130,6 @@ export const Charts: React.FC<ChartsProps> = ({ transactions }) => {
           </div>
         </div>
         
-        {/* Custom Legend */}
         <div className="mt-2 flex flex-wrap gap-2 justify-center">
            {categoryData.slice(0, 4).map((entry, index) => (
              <div key={index} className="flex items-center gap-1.5">
