@@ -1,7 +1,8 @@
 import { Transaction } from '../types';
-import { MOCK_TRANSACTIONS, CATEGORIES as DEFAULT_CATEGORIES } from '../constants';
+import { CATEGORIES as DEFAULT_CATEGORIES } from '../constants';
 
-const STORAGE_KEY = 'penalty_dash_data_v1';
+// Changed key to v2 to force a fresh start (clearing old mock data)
+const STORAGE_KEY = 'penalty_dash_data_v2';
 const CATEGORY_STORAGE_KEY = 'penalty_dash_categories_v1';
 const BROADCAST_CHANNEL_NAME = 'penalty_dash_sync';
 
@@ -16,9 +17,10 @@ export const transactionService = {
     
     const stored = localStorage.getItem(STORAGE_KEY);
     if (!stored) {
-      // Initialize with mock data if empty
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(MOCK_TRANSACTIONS));
-      return [...MOCK_TRANSACTIONS];
+      // Initialize with EMPTY array instead of mock data
+      const initialData: Transaction[] = [];
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(initialData));
+      return initialData;
     }
     return JSON.parse(stored);
   },
