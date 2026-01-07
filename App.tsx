@@ -23,7 +23,7 @@ import { transactionService } from './services/storageService';
 import { presenceService } from './services/presenceService';
 import { TEAM_MEMBERS } from './constants';
 
-const USER_STORAGE_KEY = 'penalty_dash_user_v2'; // Bumped version for new avatar support
+const USER_STORAGE_KEY = 'penalty_dash_user_v2'; 
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
@@ -62,8 +62,6 @@ const App: React.FC = () => {
     });
 
     // Setup Presence Subscription
-    // Note: We subscribe with currentUser. If currentUser changes (e.g. avatar update), 
-    // we need to update the presence service.
     const presenceSub = presenceService.subscribe(currentUser, (users) => {
       setOnlineUsers(users);
     });
@@ -72,7 +70,7 @@ const App: React.FC = () => {
       txSubscription.unsubscribe();
       presenceSub.unsubscribe();
     };
-  }, [currentUser]); // Re-run if currentUser changes (this handles presence update implicitly via re-subscription or we can optimize)
+  }, [currentUser]); 
 
   const fetchTransactions = async () => {
     try {
@@ -104,12 +102,6 @@ const App: React.FC = () => {
     const updatedUser = { ...currentUser, avatar: newUrl };
     setCurrentUser(updatedUser);
     localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
-    
-    // Determine which presence instance to update. 
-    // Since re-rendering App component will trigger useEffect cleanup and re-subscribe,
-    // the new avatar will be broadcast automatically by the new subscription.
-    // However, for immediate local feedback without flicker, we can manually update via service if we exposed it,
-    // but React effect cleanup/setup is fast enough here.
   };
 
   // Helper to find avatar from TEAM_MEMBERS or Online Users or Fallback
@@ -392,7 +384,7 @@ const App: React.FC = () => {
                               <td className="py-4 pl-4 font-medium text-white flex items-center gap-3">
                                 <div className={`w-2 h-10 rounded-full ${t.type === TransactionType.INCOME ? 'bg-primary-500' : 'bg-pink-500'}`}></div>
                                 <div>
-                                    <div className="text-base">{t.description}</div>
+                                    <div className="text-base">{t.description || 'Không có mô tả'}</div>
                                     <div className="text-xs text-gray-500 mt-0.5">{t.status === 'completed' ? 'Hoàn thành' : 'Đang xử lý'}</div>
                                 </div>
                               </td>
@@ -424,7 +416,8 @@ const App: React.FC = () => {
                                       e.stopPropagation();
                                       if(confirm('Bạn có chắc muốn xóa?')) {
                                           transactionService.delete(t.id);
-                                          // Update local state handled by listener
+                                          // Force local update immediately as BroadcastChannel doesn't ping back to sender
+                                          setTransactions(prev => prev.filter(item => item.id !== t.id));
                                       }
                                   }} 
                                   className="text-gray-600 hover:text-red-400 transition-colors p-2 hover:bg-white/5 rounded-full"

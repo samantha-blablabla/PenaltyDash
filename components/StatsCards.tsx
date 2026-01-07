@@ -14,7 +14,7 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ stats }) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
       
-      {/* Main Balance Card - Styled like "Today note" in reference */}
+      {/* Main Balance Card */}
       <div className="lg:col-span-2 relative overflow-hidden rounded-3xl p-8 text-white shadow-2xl">
         <div className="absolute inset-0 accent-gradient opacity-90"></div>
         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-soft-light"></div>
@@ -43,25 +43,19 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ stats }) => {
                 <p className="text-blue-100 text-xs mb-1">Thu (Phạt)</p>
                 <div className="flex items-center gap-2">
                    <span className="text-lg font-bold text-white">{formatCurrency(stats.totalIncome)}</span>
-                   <span className="bg-emerald-500/20 text-emerald-300 text-[10px] px-1.5 py-0.5 rounded-full flex items-center">
-                     <ArrowUpRight size={10} className="mr-0.5"/> 12%
-                   </span>
                 </div>
              </div>
              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 flex-1 border border-white/10">
                 <p className="text-blue-100 text-xs mb-1">Chi tiêu</p>
                 <div className="flex items-center gap-2">
                    <span className="text-lg font-bold text-white">{formatCurrency(stats.totalExpense)}</span>
-                   <span className="bg-rose-500/20 text-rose-300 text-[10px] px-1.5 py-0.5 rounded-full flex items-center">
-                     <ArrowDownRight size={10} className="mr-0.5"/> 5%
-                   </span>
                 </div>
              </div>
           </div>
         </div>
       </div>
 
-      {/* Right Column - Stats List like "My files" */}
+      {/* Right Column - Stats List */}
       <div className="glass-card-gradient rounded-3xl p-6 shadow-xl relative overflow-hidden">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-lg font-semibold text-white">Hoạt động</h3>
@@ -97,11 +91,12 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ stats }) => {
 
           <div className="mt-6 pt-4 border-t border-gray-700/50">
              <div className="flex justify-between items-center mb-2">
-                <span className="text-xs text-gray-400">Ngân sách sử dụng</span>
-                <span className="text-xs text-white font-bold">70%</span>
+                <span className="text-xs text-gray-400">Giao dịch</span>
+                <span className="text-xs text-white font-bold">{stats.transactionCount}</span>
              </div>
+             {/* Removed fake 'budget usage' percentage and replaced with dynamic transaction count bar */}
              <div className="w-full bg-gray-700/50 h-2 rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-blue-500 to-purple-500 w-[70%] rounded-full shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
+                <div className="h-full bg-gradient-to-r from-blue-500 to-purple-500 w-full rounded-full opacity-50"></div>
              </div>
           </div>
         </div>

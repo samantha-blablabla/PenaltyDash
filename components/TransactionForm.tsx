@@ -35,7 +35,8 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onAdd, onClose
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!amount || !description || isSubmitting) return;
+    // Removed !description check to make it optional
+    if (!amount || isSubmitting) return;
     if (isCreatingCategory && !category.trim()) return;
 
     setIsSubmitting(true);
@@ -50,7 +51,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onAdd, onClose
         type,
         amount: parseFloat(amount),
         category: category.trim(),
-        description,
+        description: description.trim(), // Allow empty description
         relatedPerson: relatedPerson.trim() || currentUser.name,
         date,
         status: 'completed'
@@ -203,14 +204,17 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onAdd, onClose
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">Mô tả chi tiết</label>
+            <div className="flex justify-between items-center mb-1.5">
+                <label className="block text-xs font-medium text-gray-400 uppercase tracking-wide">Mô tả chi tiết</label>
+                <span className="text-[10px] text-gray-500 italic">(Không bắt buộc)</span>
+            </div>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
               className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none placeholder-gray-600"
               placeholder="Ví dụ: Đi trễ 15p họp đầu tuần..."
-              required
+              // Removed required attribute
             ></textarea>
           </div>
 
