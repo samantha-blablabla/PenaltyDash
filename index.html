@@ -14,7 +14,7 @@
               sans: ['Inter', 'system-ui', 'sans-serif'],
             },
             colors: {
-              // Electric Blue / Indigo Theme
+              // Blue Theme (Xanh dương) - Restoring Blue as requested
               primary: {
                 50: '#eff6ff',
                 100: '#dbeafe',
@@ -34,10 +34,10 @@
                 900: '#0f172a', // Main bg (Slate 900)
                 950: '#020617', // Darker accents
               },
-              // Violet accents for gradients
+              // Accents
               accent: {
-                500: '#8b5cf6',
-                600: '#7c3aed',
+                500: '#f43f5e', // Rose/Pink for contrast
+                600: '#e11d48',
               }
             }
           }
@@ -49,7 +49,7 @@
         background-color: #0f172a; /* Slate 900 - Deep Navy */
         background-image: 
           radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.08), transparent 25%), 
-          radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.08), transparent 25%);
+          radial-gradient(circle at 85% 30%, rgba(124, 58, 237, 0.08), transparent 25%);
         color: #f1f5f9;
         font-family: 'Inter', system-ui, sans-serif;
       }
@@ -83,7 +83,7 @@
       }
       
       .accent-gradient {
-        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #7c3aed 100%);
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
       }
     </style>
   <script type="importmap">
@@ -95,7 +95,8 @@
     "recharts": "https://esm.sh/recharts@^3.6.0",
     "react/": "https://esm.sh/react@^19.2.3/",
     "react": "https://esm.sh/react@^19.2.3",
-    "react-markdown": "https://esm.sh/react-markdown@^10.1.0"
+    "react-markdown": "https://esm.sh/react-markdown@^10.1.0",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.89.0"
   }
 }
 </script>

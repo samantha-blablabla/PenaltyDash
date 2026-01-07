@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, Loader2 } from 'lucide-react';
 import { Transaction, TransactionType } from '../types';
 import { CATEGORIES } from '../constants';
 
 interface TransactionFormProps {
-  onAdd: (transaction: Transaction) => void;
+  onAdd: (transaction: Transaction) => Promise<void> | void;
   onClose: () => void;
 }
 
@@ -14,23 +14,32 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onAdd, onClose
   const [category, setCategory] = useState<string>(CATEGORIES[0]);
   const [description, setDescription] = useState<string>('');
   const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!amount || !description) return;
+    if (!amount || !description || isSubmitting) return;
 
-    const newTransaction: Transaction = {
-      id: Date.now().toString(),
-      type,
-      amount: parseFloat(amount),
-      category,
-      description,
-      date,
-      status: 'completed'
-    };
+    setIsSubmitting(true);
+    try {
+      const newTransaction: Transaction = {
+        id: '', // ID will be assigned by DB
+        type,
+        amount: parseFloat(amount),
+        category,
+        description,
+        date,
+        status: 'completed'
+      };
 
-    onAdd(newTransaction);
-    onClose();
+      await onAdd(newTransaction);
+      // onClose is handled by parent, but usually we close here or parent closes. 
+      // Parent closes in this App structure.
+    } catch (error) {
+      console.error("Error submitting form", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -40,7 +49,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onAdd, onClose
           <h2 className="text-xl font-bold text-white flex items-center">
             <Plus className="mr-2 text-blue-500" /> Thêm Giao dịch
           </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors p-1 hover:bg-white/10 rounded-full">
+          <button onClick={onClose} disabled={isSubmitting} className="text-gray-400 hover:text-white transition-colors p-1 hover:bg-white/10 rounded-full disabled:opacity-50">
             <X size={24} />
           </button>
         </div>
@@ -127,9 +136,17 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onAdd, onClose
           <div className="pt-2">
             <button
               type="submit"
-              className="w-full accent-gradient text-white font-bold py-3.5 px-4 rounded-xl shadow-lg hover:shadow-blue-500/30 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+              disabled={isSubmitting}
+              className="w-full accent-gradient text-white font-bold py-3.5 px-4 rounded-xl shadow-lg hover:shadow-blue-500/30 transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
-              Lưu giao dịch
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 animate-spin" size={20} />
+                  Đang lưu...
+                </>
+              ) : (
+                'Lưu giao dịch'
+              )}
             </button>
           </div>
         </form>
